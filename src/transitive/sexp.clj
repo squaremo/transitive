@@ -49,15 +49,17 @@
       (cond (= char COLON)
             (stroflen buf sofar (inc pos))
             :else
-            (recur buf (inc pos) (+ (- char ZERO) ( * 10 sofar)))))))
+            (let [num (- char ZERO)]
+              (assert (and (>= num 0) (< num 10)))
+              (recur buf (inc pos) (+  num (* 10 sofar))))))))
 
-(defn start [buf pos]
+(defn start [buf]
   (if (> (remaining buf) 0)
-    (let [char (get-byte buf pos)]
+    (let [char (get-byte buf 0)]
       (cond (= char OPAREN)
-            [true :open (slice buf (inc pos))]
+            [true :open (slice buf 1)]
             (= char CPAREN)
-            [true :close (slice buf (inc pos))]
+            [true :close (slice buf 1)]
             :else
-            (strprefix buf (inc pos) (- char ZERO))))
+            (strprefix buf 1 (- char ZERO))))
     [false start]))

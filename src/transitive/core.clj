@@ -1,6 +1,6 @@
 (ns transitive.core
-  (:use 'sexp)
-  (:use 'lamina.core))
+  (:use transitive.sexp)
+  (:use lamina.core))
 
 ;; Take a channel that spurts sequences of 'a and flatten it into a
 ;; channel that emits 'a
@@ -16,9 +16,9 @@
                [[result val & rest]]
                (if result
                  (do (enqueue out val)
-                     (handle (start (first rest) 0)))
+                     (handle (start (first rest))))
                  (receive in (fn [buf] (handle (val buf))))))]
-        (receive in (fn [buf] (lex (start buf 0))))
+        (receive in (fn [buf] (lex (start buf))))
         out))
 
 (defn lex-printer [val]
