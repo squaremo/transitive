@@ -1,5 +1,4 @@
 ;; SExp codec
-
 (ns transitive.sexp)
 
 (def OPAREN 0x28)
@@ -53,7 +52,7 @@
               (assert (and (>= num 0) (< num 10)))
               (recur buf (inc pos) (+  num (* 10 sofar))))))))
 
-(defn start [buf]
+(defn lex [buf]
   (if (> (remaining buf) 0)
     (let [char (get-byte buf 0)]
       (cond (= char OPAREN)
@@ -61,5 +60,22 @@
             (= char CPAREN)
             [true :close (slice buf 1)]
             :else
-            (strprefix buf 1 (- char ZERO))))
-    [false start]))
+            (let [num (- char ZERO)]
+              (assert (and (>= num 0) (< num 10)))
+              (strprefix buf 1 num))))
+    [false lex]))
+
+;; ff are useful for debugging and testing, primarily
+
+(defn ascii-to-bytebuf [s] (java.nio.ByteBuffer/wrap
+                            (.getBytes s "ascii")))
+
+(let [ASCII (java.nio.charset.Charset/forName "ISO-8859-1")]
+  (defn bytebuf-to-ascii [bb]
+    (.toString (.decode ASCII bb))))
+
+(defn token-printer [val]
+  (cond
+   (= val :open) (println "(")
+   (= val :close) (println ")")
+   :else (println (bytebuf-to-ascii val))))
