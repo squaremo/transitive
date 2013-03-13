@@ -12,7 +12,7 @@
 
 (defn lex-channel [ch]
   (let* [out (lamina/channel)
-         in (flatten-channel ch)
+         in ch
          lex (fn handle
                [[result val & rest]] ;; either [true output & rest]
                                      ;;     or [false parseFn & rest]
@@ -32,7 +32,6 @@
   (let [out (lamina/channel)]
     ;; no letrec in clojure, yuck
     (letfn [(readtok [parse] (lamina/receive lexed parse))
-
             (error [e] (lamina/error out e))
 
             ;; start := sexp*
@@ -67,3 +66,17 @@
                               (start))))]
       (readtok (start))
       out)))
+
+(defn unparse-channel [terms]
+  (let [outer (lamina/channel)]
+    (letfn [(linearise [value]
+              (cond (sequential? value)
+                    ;; %%% This is more complex using tail call,
+                    ;; because no mutual recursion.
+                    (do (lamina/enqueue outer :open)
+                        (doseq [item value] (linearise item))
+                        (lamina/enqueue outer :close))
+                    :else
+                    (lamina/enqueue outer value)))]
+      (lamina/receive-all terms linearise)
+      outer)))
