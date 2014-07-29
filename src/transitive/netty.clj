@@ -31,13 +31,6 @@
       (doto (.pipeline channel)
         (.addLast "echo" (make-channel-adapter))))))
 
-(defn print-new []
-  (println "new channel"))
-
-(defn make-channel-reporter []
-  (proxy [ChannelInitializer] []
-    (initChannel [^Channel ch] (print-new))))
-
 (defn make-listener []
   (let [bosses  (NioEventLoopGroup.)
         workers (NioEventLoopGroup.)
@@ -48,5 +41,5 @@
                    (.channel NioServerSocketChannel)
                    (.childHandler (make-channel-adapter))
                    (.option ChannelOption/SO_BACKLOG (int 128))
-                   #_(.childOption ChannelOption/SO_KEEPALIVE true))]
+                   (.childOption ChannelOption/SO_KEEPALIVE true))]
       [boot, shutdown])))
