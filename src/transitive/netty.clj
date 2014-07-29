@@ -13,25 +13,13 @@
           [io.netty.channel.socket SocketChannel]
           [io.netty.channel.socket.nio NioServerSocketChannel]))
 
-(defn make-channel-adapter []
-  (proxy [ChannelInboundHandlerAdapter] []
-    (channelRead
-      [^ChannelHandlerContext ctx buf]
-      (.write ctx buf))
-    (channelReadComplete [ctx]
-      (.flush ctx))
-    (exceptionCaught
-      [^ChannelHandlerContext ctx ^Throwable cause]
-      (.printStackTrace cause)
-      (.close ctx))))
-
-(defn make-channel-initializer []
+(defn make-channel-initializer [make-channel-adapter]
   (proxy [ChannelInitializer] []
     (initChannel [^SocketChannel channel]
       (doto (.pipeline channel)
-        (.addLast "echo" (make-channel-adapter))))))
+        (.addLast "client" (make-channel-adapter))))))
 
-(defn make-listener []
+(defn make-listener [make-channel-adapter]
   (let [bosses  (NioEventLoopGroup.)
         workers (NioEventLoopGroup.)
         shutdown #(do (.shutdownGracefully bosses)
@@ -39,7 +27,8 @@
     (let [boot (-> (ServerBootstrap.)
                    (.group bosses workers)
                    (.channel NioServerSocketChannel)
-                   (.childHandler (make-channel-adapter))
+                   (.childHandler
+                    (make-channel-initializer make-channel-adapter))
                    (.option ChannelOption/SO_BACKLOG (int 128))
                    (.childOption ChannelOption/SO_KEEPALIVE true))]
       [boot, shutdown])))
