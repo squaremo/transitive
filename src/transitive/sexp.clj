@@ -6,6 +6,7 @@
 (def LPAR (.codePointAt "(" 0))
 (def RPAR (.codePointAt ")" 0))
 
+(declare fresh)
 (declare string)
 (declare prefix)
 
@@ -62,3 +63,5 @@
       (return stack (String. (-> (cons (char byte) gathered)
                                  reverse into-array char-array)))
       [:more (string stack (cons (char byte) gathered) (- left 1))])))
+
+(def start (fresh '()))

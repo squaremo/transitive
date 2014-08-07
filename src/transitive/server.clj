@@ -24,9 +24,9 @@
                        (let [val (async/<! out)]
                          (cond
                           (nil? val) (.close ctx)
-                          :else (do
-                                  (.write ctx val)
-                                  (.flush ctx)
+                          :else (let [buf (-> ctx .alloc .buffer)]
+                                  (.writeBytes buf (.getBytes (str val)))
+                                  (.writeAndFlush ctx buf)
                                   (recur))))))
       (channelRead
         [^ChannelHandlerContext ctx buf]
